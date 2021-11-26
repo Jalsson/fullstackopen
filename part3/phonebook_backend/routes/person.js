@@ -2,18 +2,44 @@ const express = require("express");
 const router = express.Router();
 const persons = require('../persons')
 const fs = require('fs');
+const mongoose = require('mongoose')
+const password = require('../secret')
+
+const numberSchema = new mongoose.Schema({
+    userName: String,
+    number: String,
+})
+
+const Phone = mongoose.model('Phone', numberSchema)
+
+const url =
+    `mongodb+srv://nnadmin:${password}@phonbook.3qw1b.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`
+
 
 router.get("/", (req, res) => {
-    res.send(persons)
+
+    mongoose.connect(url)
+
+    Phone.find({}).then(result => {
+        res.send(result)
+        mongoose.connection.close()
+    })
+
 });
 
 router.get("/:id", (req, res) => {
     const id = req.params.id
-    let personIndex = findPerson(id)
-    if (personIndex == undefined)
+    mongoose.connect(url)
+
+    Phone.find({_id: id}).then(result => {
+        res.send(result)
+        mongoose.connection.close()
+    }).catch((error) => {
         res.sendStatus(404)
-    else
-        res.send(persons[personIndex])
+        mongoose.connection.close()
+    })
+
+
 });
 
 router.post("/", (req, res) => {
@@ -24,26 +50,26 @@ router.post("/", (req, res) => {
         res.status(400).send({error: 'No number added'})
         return
     }
-
-    for (let i = 0; i < persons.length; i++) {
-        const person = persons[i];
-        if (newPerson.name == person.name) {
-            found = true
-            break;
-        }
-    }
-
-    if (found) {
+    console.log("finding person")
+    Phone.find({userName: newPerson.name}).then(result => {
+        console.log("person result")
         res.status(400).send({error: 'name must be unique'})
-        return
-    }
+        mongoose.connection.close()
+    }).catch((error) => {
+        const note = new Phone({
+            userName: newPerson.name,
+            number: newPerson.number
+        })
+        console.log("saving new person")
+        note.save().then(result => {
+            res.sendStatus(200)
+            mongoose.connection.close()
+        }).catch((error) => {
+            res.status(400).send({error: `${error}`})
+            mongoose.connection.close()
+        })
 
-
-    newPerson.id = getRandomInt(100000)
-    const copy = persons
-    copy.push(newPerson)
-    savePersons(copy)
-    res.sendStatus(200)
+    })
 });
 
 router.delete("/:id", (req, res) => {
