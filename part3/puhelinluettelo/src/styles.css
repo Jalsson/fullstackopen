@@ -1,0 +1,21 @@
+.success {
+    height: 60px;
+    border: solid 3px green;
+    background: lightgreen;
+    border-radius: 5px;
+    display: grid;
+    place-items: center;
+    font-size: 2rem;
+    margin: 1rem;
+}
+
+.error {
+    height: 60px;
+    border: solid 3px #FF5D5D;
+    background: #FFA9A9;
+    border-radius: 5px;
+    display: grid;
+    place-items: center;
+    font-size: 2rem;
+    margin: 1rem;
+}
