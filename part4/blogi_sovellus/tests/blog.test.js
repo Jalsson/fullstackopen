@@ -1,4 +1,10 @@
 const listHelper = require('../utils/list_helper')
+const mongoose = require('mongoose')
+const app = require('../index')
+
+const supertest = require('supertest')
+const api = supertest(app)
+
 
 test('dummy returns one', () => {
     const blogs = []
@@ -64,6 +70,80 @@ describe('most likes', () => {
     })
 })
 
+test("blog has a unique id named 'id'", async () => {
+    const response = await api.get("/api/blogs")
+
+    expect(response.body[0].id).toBeDefined()
+});
+
+test('notes are returned as json', async () => {
+    await api
+        .get('/api/blogs')
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+})
+
+afterAll(() => {
+    mongoose.connection.close()
+})
+
+
+test("a blog can be added to list", async () => {
+
+    let blogs = await api.get('/api/blogs')
+    blogs = blogs.body
+    const newBlog = {
+        title: "My Blog",
+        author: "N Nilsson",
+        url: "uuvana.com",
+        likes: 420
+    }
+
+    await api
+        .post("/api/blogs")
+        .send(newBlog)
+        .expect(201)
+        .expect("Content-Type", /application\/json/)
+
+    let blogsAfter = await api.get('/api/blogs')
+    blogsAfter = blogsAfter.body
+    const contents = blogsAfter.map((blog) => blog.title)
+    expect(contents).toContain("My Blog")
+
+    expect(blogsAfter).toHaveLength(blogs.length + 1)
+
+})
+
+test("If likes has no value, value is set to 0", async () => {
+    const newBlog = {
+        title: "My Blog 2",
+        author: "N Nilsson",
+        url: "longvinter.com"
+    }
+
+    const createdBlog = await api
+        .post("/api/blogs")
+        .send(newBlog)
+        .expect(201)
+        .expect("Content-Type", /application\/json/)
+
+    const likes = createdBlog.body.likes
+
+    expect(likes).toBe(0)
+})
+
+test("If Url or title is missing, get bad request", async () => {
+    const newBlog = {
+        author: "N Nilsson"
+    }
+
+    const createdBlog = await api
+        .post("/api/blogs")
+        .send(newBlog)
+        .expect(400)
+        .expect("Content-Type", /application\/json/)
+})
+
 const blogs = [
     {
         _id: "5a422a851b54a676234d17f7",
@@ -114,3 +194,5 @@ const blogs = [
         __v: 0
     }
 ]
+
+

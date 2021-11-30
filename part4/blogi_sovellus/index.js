@@ -17,7 +17,7 @@ const myMorgan = morgan(function (tokens, req, res) {
 })
 app.use(myMorgan)
 
- 
+
 // this has to be the last loaded middleware.
 
 
@@ -30,11 +30,13 @@ app.use(function (req, res, next) {
 
 const url =
     `mongodb+srv://nnadmin:${password}@phonbook.3qw1b.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`
-mongoose.connect(url)
+mongoose.connect(url).then(() => {
+    console.log("connected to MongoDB");
+})
 
 // Routes
 app.use("/info", require("./routes/info"))
-app.use("/api/blog", require("./routes/blog"));
+app.use("/api/blogs", require("./routes/blog"));
 
 
 const errorHandler = (error, request, response, next) => {
@@ -48,6 +50,5 @@ const errorHandler = (error, request, response, next) => {
 
 app.use(errorHandler)
 
-const PORT = process.env.PORT || 3003;
 
-app.listen(PORT, console.log("Server started on port " + PORT));
+module.exports = app;
